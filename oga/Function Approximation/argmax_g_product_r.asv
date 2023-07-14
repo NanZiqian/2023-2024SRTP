@@ -26,3 +26,4 @@ function [wk,bk] = argmax_g_product_r(Cn_1,w,b,u,c)
     wk=w_star;
     bk=b_star;
 end
+
