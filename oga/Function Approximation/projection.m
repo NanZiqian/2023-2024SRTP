@@ -9,7 +9,7 @@ function cp=projection(u,w,b)
     end
     c=sym("c",[n 1]);
     for i=1:n
-        eqn(i)=(XGaussIntegral((u-g*c)*g(i),0,1,100)==0);
+        eqn(i)=( XGaussIntegral((u-g*c)*g(i),0,1,100) +  XGaussIntegral((diff(u)-diff(g)*c)*diff(g(i)),0,1,100)   ==0);
     end
     [A,b]=equationsToMatrix(eqn,c);
     A=eval(A);

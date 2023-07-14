@@ -15,7 +15,7 @@ function [wk,bk] = argmax_g_product_r(Cn_1,w,b,u,c)
         for bi=-c:2*c/10:c
             g=RELU(wi*x+bi,1);
             % 这里没用我们自己写的Gauss积分，因为太慢了
-            temp=abs(int(g*(un_1-u),x,0,1));
+            temp=abs( int(g*(un_1-u), x ,0,1) + int(diff(g)*diff(un_1-u), x,0,1 ));
             if temp > max
                 w_star=wi;
                 b_star=bi;
