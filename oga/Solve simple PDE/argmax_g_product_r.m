@@ -3,6 +3,7 @@
 % c为神经网络函数sigma(wx+b)中b的取值范围
 function [wk,bk] = argmax_g_product_r(Cn_1,w,b,f,c)
     [~,n]=size(w);
+    syms x;
     for i=1:n
         gi(i)=RELU(w(i)*x+b(i),1);
     end

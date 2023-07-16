@@ -9,7 +9,7 @@ function cp=projection(f,w,b)
     end
     c=sym("c",[n 1]);
     for i=1:n
-        eqn(i)=( -int((g*c)*g(i),x,0,1) - int((diff(g)*c)*diff(g(i)),x,0,1) + int(f*g(i),x,0,1) ==0);
+        eqn(i)=( int((g*c)*g(i),x,0,1) + int((diff(g)*c)*diff(g(i)),x,0,1) - int(f*g(i),x,0,1) ==0);
     end
     [A,b]=equationsToMatrix(eqn,c);
     A=eval(A);
