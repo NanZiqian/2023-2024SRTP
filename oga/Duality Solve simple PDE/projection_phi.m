@@ -3,16 +3,18 @@
 function cp=projection_phi(w,b)
     syms x;
     [~,n]=size(w);
-    
+    g=sym("x",[1 n]);
+    eqn=sym("x",[1 n]);
+
     for i=1:n
         g(i)=RELU(x*w(i)+b(i),1);
     end
     c=sym("c",[n 1]);
     for i=1:n
-        eqn(i)=( int((g*c)*g(i),x,0,1) + int((diff(g)*c)*diff(g(i)),x,0,1) - subs(g(i),x,1) ==0);
+        eqn(i)=( int((g*c)*g(i),x,0,1) + int((diff(g)*c)*diff(g(i)),x,0,1) - eval(subs(g(i),x,0)) ==0);
     end
     [A,b]=equationsToMatrix(eqn,c);
     A=eval(A);
     b=eval(b);
-    cp=A\b;
+    cp=pinv(A)*b;
 end

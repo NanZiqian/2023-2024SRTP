@@ -4,6 +4,7 @@
 function [w_star,b_star] = argmax_g_product_ru(Cn_1,w,b,f,c)
     [~,n]=size(w);
     syms x;
+    gi=sym("x",[1 n]);
     for i=1:n
         gi(i)=RELU(w(i)*x+b(i),1);
     end

@@ -3,7 +3,9 @@
 function cp=projection_u(f,w,b)
     syms x;
     [~,n]=size(w);
-    
+    g=sym("x",[1 n]);
+    eqn=sym("x",[1 n]);
+
     for i=1:n
         g(i)=RELU(x*w(i)+b(i),1);
     end
@@ -14,5 +16,5 @@ function cp=projection_u(f,w,b)
     [A,b]=equationsToMatrix(eqn,c);
     A=eval(A);
     b=eval(b);
-    cp=A\b;
+    cp=pinv(A)*b;
 end

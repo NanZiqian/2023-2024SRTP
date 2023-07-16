@@ -4,6 +4,7 @@
 function [wk,bk] = argmax_g_product_rphi(Cn_1,w,b,c)
     [~,n]=size(w);
     syms x;
+    hi=sym("x",[1 n]);
     for i=1:n
         hi(i)=RELU(w(i)*x+b(i),1);
     end
@@ -14,7 +15,7 @@ function [wk,bk] = argmax_g_product_rphi(Cn_1,w,b,c)
         for bi=-c:2*c/10:c
             g=RELU(wi*x+bi,1);
             % 这里没用我们自己写的Gauss积分，因为太慢了
-            temp=abs( int(g*phin_1, x ,0,1) + int(diff(g)*diff(phin_1), x,0,1 ) - subs(g,x,1));
+            temp=abs( int(g*phin_1, x ,0,1) + int(diff(g)*diff(phin_1), x,0,1 ) - eval(subs(g,x,0)) );
             if temp > max
                 w_star=wi;
                 b_star=bi;
