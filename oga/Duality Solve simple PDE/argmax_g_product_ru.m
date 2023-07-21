@@ -2,12 +2,8 @@
 %   w,b为g的信息，Cn_1为系数列向量，un_1=(g1,...,gn_1)Cn_1
 % c为神经网络函数sigma(wx+b)中b的取值范围
 function [w_star,b_star] = argmax_g_product_ru(Cn_1,w,b,f,c)
-    [~,n]=size(w);
     syms x;
-    gi=sym("x",[1 n]);
-    for i=1:n
-        gi(i)=RELU(w(i)*x+b(i),1);
-    end
+    gi=arrayfun(@(x) RELU(x,1),w.*x+b);
     un_1=gi*Cn_1;
     max=-Inf;
 
