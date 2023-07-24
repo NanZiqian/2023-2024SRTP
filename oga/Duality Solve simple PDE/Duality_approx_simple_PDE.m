@@ -1,13 +1,15 @@
 
+% -u''+u=f,f=(1+pi^2)*cos(pi*x);
+%BASE_SIZE need to be even or will be minus one
+function [uk] = Duality_approx_simple_PDE(BASE_SIZE)
 %% preparation
-    clear;
     x=sym("x");
-    % -u''+u=f,
+    % -u''+u=f,f=(1+pi^2)*cos(pi*x);
     f=(1+pi^2)*cos(pi*x);
     %离散区域数量
-    N=100;
-    %基的数目，对偶问题中最终基数目为2*BASE_SIZE
-    BASE_SIZE=4;
+    % N=100;没用上
+    %基的数目，对偶问题中最终基数目为2*BASE_SIZE/2=BASE_SIZE
+    BASE_SIZE=round(BASE_SIZE/2);
 
     Ck=0;% un_1的系数列向量
     Cprimek=0;% phin_1的系数列向量
@@ -31,7 +33,7 @@
 
 
         %w前k个为g的信息，后k个为h的信息；缺点：每一轮都得重写
-        w=[w_g(1,1:k),w_h(1,1:k)];% g(i)=RELU(x*w_g(i)+b_g(i),1);h(i)=RELU(x*w_h(i)+b_h(i),1);
+        w=[w_g(1,1:k),w_h(1,1:k)];% g(i)=RELU(x*w_g(i)+b_g(i),2);h(i)=RELU(x*w_h(i)+b_h(i),2);
         b=[b_g(1,1:k),b_h(1,1:k)];
 
         %w,b包含span(g1,...,gk,h1,...,hk)的信息
@@ -42,8 +44,8 @@
 
     %% 在这之后分别输出un_1,u的图像，进行比较
     % 需要C与w,b才能获得uk=(g1,...,gk,h1,...,hk)Ck
-    uk=arrayfun(@(x) RELU(x,1),w.*x+b)*Ck;
-    
-    fplot(uk,[0,1],':r');
-    hold on
-    fplot(cos(pi*x),[0,1],'-b');
+    uk=arrayfun(@(x) RELU(x,2),w.*x+b)*Ck;
+end
+%     fplot(uk,[0,1],':r');
+%     hold on
+%     fplot(cos(pi*x),[0,1],'-b');

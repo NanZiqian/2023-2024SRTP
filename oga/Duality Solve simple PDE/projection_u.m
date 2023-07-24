@@ -4,7 +4,7 @@ function cp=projection_u(f,w,b)
     syms x;
     [~,n]=size(w);
 
-    g=arrayfun(@(x) RELU(x,1),w.*x+b);
+    g=arrayfun(@(x) RELU(x,2),w.*x+b);
     c=sym("c",[n 1]);
     %for i=1:n
     %    eqn(i)=( int((g*c)*g(i),x,0,1) + int((diff(g)*c)*diff(g(i)),x,0,1) - int(f*g(i),x,0,1) ==0);
