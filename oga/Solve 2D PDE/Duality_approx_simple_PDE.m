@@ -1,7 +1,7 @@
 
 %% preparation
     clear;
-    x=sym("x",[2,1]);
+    syms x [2,1];
     % -Δu+u=f
     f=(1+8*pi^2)*cos(2*pi*x(1))*cos(2*pi*x(2));
 
@@ -13,7 +13,7 @@
 
     uk=0;
     phik=0;
-    gh=sym("g",[1,2*BASE_SIZE]);
+    %gh=sym("g",[1,2*BASE_SIZE]);
     k=0;
 
     %% while
@@ -38,9 +38,9 @@
     
     
     %% 在这之后分别输出un_1,u的图像，进行比较
-    [x(1),x(2)]=meshgrid(-1:0.1:1,-1:0.1:1);
-    u=cos(2*pi*x(1))*cos(2*pi*x(2));
-    surf(x,y,z);
-    fplot(uk,[0,1],':r');
-    hold on
-    fplot(,[0,1],'-b');
+    [a,b]=meshgrid(0:0.1:1,0:0.1:1);
+    u=cos(2*pi*a).*cos(2*pi*b);
+    uuk=arrayfun(@(p,q) subs(uk,x,[p;q]),a,b);
+    surf(a,b,u);
+    hold on;
+    surf(a,b,uuk);
