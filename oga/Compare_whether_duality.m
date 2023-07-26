@@ -57,7 +57,7 @@ ylabel('与0的误差'); %y轴坐标描述
 plot(errorat0_dual,time_dual,'--r',errorat0_ori,time_ori,'-k');
 legend('dual time','ori time');   %右上角标注
 xlabel('与0的误差');  %x轴坐标描述
-ylabel('运行时间'); %y轴坐标描述
+ylabel('运行时间');   %y轴坐标描述
 % time_dual=time_dual';
 % errorat0_dual=errorat0_dual';
 % average_error_dual=average_error_dual';
