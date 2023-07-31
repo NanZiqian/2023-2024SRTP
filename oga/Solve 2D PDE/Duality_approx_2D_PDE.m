@@ -2,6 +2,7 @@
 %% preparation
     clear;
     syms x [2,1];
+    
     % -Δu+u=f
     f=(1+8*pi^2)*cos(2*pi*x(1))*cos(2*pi*x(2));
 
@@ -9,11 +10,11 @@
     %N=100;
 
     %基的数目，对偶问题中最终基数目为2*BASE_SIZE
-    BASE_SIZE=4;
+    BASE_SIZE=3;
 
-    uk=0;
-    phik=0;
-    %gh=sym("g",[1,2*BASE_SIZE]);
+    uk=0*x1;
+    phik=0*x1;
+    gh=x1;
     k=0;
 
     %% while
@@ -27,12 +28,9 @@
         gh(2*k) = argmax_g_product_rphi(phik);
 
         %w,b包含span(g1,...,gk,h1,...,hk)的信息
-        Ck=projection_u(f,gh,2*k);
-        Cprimek=projection_phi(gh,2*k);
+        uk=projection_u(f,gh,2*k);
+        phik=projection_phi(gh,2*k);
 
-        % 需要C与gh才能获得uk=(g1,...,gk,h1,...,hk)Ck
-        uk=gh*Ck;
-        phik=gh*Cprimek;
     end
     
     
@@ -41,6 +39,6 @@
     [a,b]=meshgrid(0:0.1:1,0:0.1:1);
     u=cos(2*pi*a).*cos(2*pi*b);
     uuk=arrayfun(@(p,q) subs(uk,x,[p;q]),a,b);
-    surf(a,b,u);
+    mesh(a,b,uuk);
     hold on;
-    surf(a,b,uuk);
+    mesh(a,b,u);
