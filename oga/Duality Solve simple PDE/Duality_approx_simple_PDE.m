@@ -11,11 +11,11 @@ function [uk] = Duality_approx_simple_PDE(BASE_SIZE)
     % N=100;没用上
 
     %基的数目，对偶问题中最终基数目为2*BASE_SIZE/2=BASE_SIZE
-    BASE_SIZE=round(BASE_SIZE/2);
+    BASE_SIZE=floor(BASE_SIZE/2);
 
     uk=0*x;
     phik=0*x;
-    gh=x;
+    gh=zeros(BASE_SIZE,1);
     k=0;
 
     %% while

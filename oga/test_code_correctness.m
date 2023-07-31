@@ -23,16 +23,19 @@ k=4;
 BASE_SIZE = 10;
 k=5;
 
-%% core code area
-% Duality 
+% core code area
+%% Duality 
 t1=clock;
 uk = Duality_approx_simple_PDE(BASE_SIZE);
 t2=clock;
 time_dual(k)=etime(t2,t1);
 errorat0_dual(k)=abs(double(subs(uk,x,0)-subs(u,x,0)));
 average_error_dual(k)=double(int(uk-u,x,0,1));
+%     fplot(uk,[0,1],':r');
+%     hold on
+%     fplot(cos(pi*x),[0,1],'-b');
 
-% original
+%% original
 t1=clock;
 uk = Approx_simple_PDE(BASE_SIZE);
 t2=clock;

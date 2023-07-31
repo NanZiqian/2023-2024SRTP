@@ -4,18 +4,18 @@
 function hn = argmax_g_product_rphi(phin_1)
     syms x;
     
-    max=-Inf;
+    bi = linspace(-1,3.02,202)';
+    bi(102:202) = bi(102:202)-2.02;
+    wi = ones(202,1);
+    wi(102:202) = -wi(102:202);
 
-    for wi=-1:0.2:1
-        for bi=-1:0.2:1
-            h=RELU(wi*x+bi,2);
-            % 这里没用我们自己写的Gauss积分，因为太慢了
-            temp=abs( eval(int(h*phin_1, x ,0,1) + int(diff(h)*diff(phin_1), x,0,1 ) - subs(h,x,0)) );
-            if temp > max
-                hn=h;
-                max=temp;
-            end
-        end
-    end
-
+    h = arrayfun(@(func) RELU(func),wi.*x+bi);
+    temp=abs(eval( ...
+        arrayfun(@(func) GaussInt(func,x,0,1,100),h*phin_1) + ...
+        arrayfun(@(func) GaussInt(func,x,0,1,100),diff(h)*diff(phin_1)) ...
+        - subs(h,x,0)...
+        ));
+    [~,index] = max(temp);
+    hn = h(index);
 end
+
