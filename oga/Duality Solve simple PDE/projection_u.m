@@ -6,7 +6,9 @@ function un=projection_u(f,g,n)
     
     gc=g*c;
     dgc=diff(g)*c;
-    eqn=( int(gc.*g,x,0,1)+int(dgc.*diff(g),x,0,1)-int(f.*g,x,0,1)==zeros(1,n) );
+    eqn=( arrayfun(@(func) GaussInt(func,x,0,1,100),gc.*g) ...
+        +arrayfun(@(func) GaussInt(func,x,0,1,100),dgc.*diff(g)) ...
+        -arrayfun(@(func) GaussInt(func,x,0,1,100),f.*g)==zeros(1,n) );
     [A,b]=equationsToMatrix(eqn,c);
     A=eval(A);
     b=eval(b);
