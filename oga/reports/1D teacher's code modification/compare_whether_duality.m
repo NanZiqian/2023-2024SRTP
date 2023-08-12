@@ -1,7 +1,7 @@
 
 hd = 5e-5; b = (-2.0:hd:2.0)'; 
 nd = length(b)*2;%number of dictionary = 160002
-f = @(x) (1+pi^2)*cos(pi*x);
+f = @(z) (1+pi^2)*cos(pi*z);
 syms x;
 u = cos(pi*x);
 
@@ -12,26 +12,36 @@ k=1;
 BASE_SIZE = 64;
 k=2;
 %% core code
-[id,C] = OGA_1D_ori(BASE_SIZE,nd,f);
+[id_ori,C_ori] = OGA_1D_ori(BASE_SIZE,nd,f);
 for ii = 1:BASE_SIZE
-    if id(ii)>nd/2
-        g(ii) = -x + b( mod(id(ii)-1,nd/2)+1 );
+    if id_ori(ii)>nd/2
+        g_ori(ii) = RELU(-x + b( mod(id_ori(ii)-1,nd/2)+1 ));%RELU1
     else
-        g(ii) = x + b(id(ii));
+        g_ori(ii) = RELU(x + b(id_ori(ii)));
     end
 end
-un_1 = g*C;
+un_1 = g_ori*C_ori;
 error_at0_ori(k) = abs(double(subs(un_1,x,0)-subs(u,x,0)));
-error_l2_ori(k) = double(abs(int(un_1*u,x,0,1)));
+error_l2_ori(k) = sqrt(double(abs(int((un_1-u)^2,x,0,1))));
 
-[id,C] = OGA_1D_Duality(BASE_SIZE,nd,f);
+[id_dual,C_dual] = OGA_1D_Duality(BASE_SIZE,nd,f);
 for ii = 1:BASE_SIZE
-    if id(ii)>nd/2
-        g(ii) = -x + b( mod(id(ii)-1,nd/2)+1 );
+    if id_dual(ii)>nd/2
+        g_dual(ii) = RELU(-x + b( mod(id_dual(ii)-1,nd/2)+1 ));
     else
-        g(ii) = x + b(id(ii));
+        g_dual(ii) = RELU(x + b(id_dual(ii)));
     end
 end
-un_1 = g*C;
-error_at0_dual(k) = abs(double(subs(un_1,x,0)-subs(u,x,0))));
-error_l2_dual(k) = double(abs(int(un_1*u,x,0,1)));
+un_1 = g_dual*C_dual;
+error_at0_dual(k) = abs(double(subs(un_1,x,0)-subs(u,x,0)));
+error_l2_dual(k) = sqrt(double(abs(int((un_1-u)^2,x,0,1))));
+%% draw
+fplot(un_1,[0,1],':r');
+hold on
+fplot(u,[0,1],'-b');
+
+%% functino RELU
+function r=RELU(x)
+    k=1;
+    r=piecewise(x<=0,0,x>0,x^k);
+end
