@@ -47,7 +47,7 @@ function [id,C] = OGA_1D_ori(BASE_SIZE,nd,f)
     err = id;
     for i = 1:iter
         for j = 1:nd % number of b
-            argmax(j) = norm_L2(g(:,j).*fqpt)-norm_L2(g(:,j).*un_1)-norm_L2(dg(:,j).*dun_1);
+            argmax(j) = norm_L2(g(:,j).*fqpt) - norm_L2(g(:,j).*un_1)-norm_L2(dg(:,j).*dun_1);
         end
         [~,id(i)] = max(abs(argmax));% optimal b of i^th iteration
         for j = 1:i

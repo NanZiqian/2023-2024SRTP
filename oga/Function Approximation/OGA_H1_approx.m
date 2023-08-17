@@ -1,6 +1,7 @@
 %% approximate the function f on [0,1] with iter OGA iterations
 iter = 100;
 f = @(z) sin(z); 
+df = @(z) cos(z);
 N = 500; h = 1/N;
 node = (0:h:1)';
 
@@ -15,10 +16,12 @@ nd = length(b)*2;
 %g(i,j)=1*qpt(i)+b(j),i<80001
 %g(i,j+80001)=-1*qpt(i)+b(j-80001)
 g = max([repmat(qpt,1,nd/2)+b',-repmat(qpt,1,nd/2)+b'],0); % ReLU1
+dg = double(g > 0);% differential of g
+dg(:,80002:160002) = -dg(:,80002:160002);
 
 % value of f at quadrature points
 fqpt = f(qpt); r = fqpt;
-
+dfqpt = df(qpt);dr = dfqpt;
 % inner products of selected dictionary elements.
 A = zeros(iter,iter); rhs = zeros(iter,1); % matrix and rhs for projection
 
@@ -28,16 +31,17 @@ id = zeros(iter,1); argmax = zeros(nd,1);
 err = id;
 for i = 1:iter
     for j = 1:nd % number of b
-        argmax(j) = pnorm(g(:,j).*r);% r = f(qpt)
+        argmax(j) = pnorm(g(:,j).*r) + pnorm(dg(:,j).*dr);% r = f(qpt)
     end
     [~,id(i)] = max(abs(argmax));% optimal b of i^th iteration
     for j = 1:i
-        A(j,i) = pnorm(g(:,id(j)).*g(:,id(i)));
+        A(j,i) = pnorm(g(:,id(j)).*g(:,id(i))) + pnorm(dg(:,id(j)).*dg(:,id(i)));
         A(i,j) = A(j,i);
     end
-    rhs(i) = pnorm(g(:,id(i)).*fqpt);
+    rhs(i) = pnorm(g(:,id(i)).*fqpt) + pnorm(dg(:,id(i)).*dfqpt);
     C = lsqminnorm(A(1:i,1:i),rhs(1:i));
     r = fqpt - g(:,id(1:i))*C;% r = u - un_1
+    dr = dfqpt - dg(:,id(1:i))*C;
 
     err(i) = sqrt(pnorm(r.^2));
 
