@@ -89,6 +89,6 @@ end
 % F(1:end/3) = function F
 % F(i)=
 function z = norm_L2(F)
-z = 5/18*sum( F(1:end/3) )+4/9*sum( F(end/3+1:end/3*2) )+5/18*sum( F(end/3*2+1:end) );
-z = z/500;% 500 == N is Gauss quadrature discretion number
+    z = 5/18*sum( F(1:end/3) )+4/9*sum( F(end/3+1:end/3*2) )+5/18*sum( F(end/3*2+1:end) );
+    z = z/500;% 500 == N is Gauss quadrature discretion number
 end

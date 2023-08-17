@@ -20,9 +20,9 @@ for ii = 1:BASE_SIZE
         g_ori(ii) = RELU(x + b(id_ori(ii)));
     end
 end
-un_1 = g_ori*C_ori;
-error_at0_ori(k) = abs(double(subs(un_1,x,0)-subs(u,x,0)));
-error_l2_ori(k) = sqrt(double(abs(int((un_1-u)^2,x,0,1))));
+un_ori = g_ori*C_ori;
+error_at0_ori(k) = abs(double(subs(un_ori,x,0)-subs(u,x,0)));
+error_l2_ori(k) = sqrt(double(abs(int((un_ori-u)^2,x,0,1))));
 
 [id_dual,C_dual] = OGA_1D_Duality(BASE_SIZE,nd,f);
 for ii = 1:BASE_SIZE
@@ -32,11 +32,15 @@ for ii = 1:BASE_SIZE
         g_dual(ii) = RELU(x + b(id_dual(ii)));
     end
 end
-un_1 = g_dual*C_dual;
-error_at0_dual(k) = abs(double(subs(un_1,x,0)-subs(u,x,0)));
-error_l2_dual(k) = sqrt(double(abs(int((un_1-u)^2,x,0,1))));
+un_dual = g_dual*C_dual;
+error_at0_dual(k) = abs(double(subs(un_dual,x,0)-subs(u,x,0)));
+error_l2_dual(k) = sqrt(double(abs(int((un_dual-u)^2,x,0,1))));
 %% draw
-fplot(un_1,[0,1],':r');
+fplot(un_ori,[0,1],':r');
+hold on
+fplot(u,[0,1],'-b');
+
+fplot(un_un_dual,[0,1],':r');
 hold on
 fplot(u,[0,1],'-b');
 
