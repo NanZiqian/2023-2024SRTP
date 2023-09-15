@@ -23,6 +23,7 @@ function [id,C] = OGA_1D_ori(BASE_SIZE,nd,f)
     
     % discretization of the dictionary
     % nd = 160002;number of dictionary
+    % hd = 5e-05
     hd = 8/(nd-2); b = (-2.0:hd:2.0)'; 
     
     %g = [repmat(qpt,1,nd)+b',-repmat(qpt,1,nd)+b']>0; % ReLU0
@@ -46,7 +47,7 @@ function [id,C] = OGA_1D_ori(BASE_SIZE,nd,f)
     
     err = id;
     for i = 1:iter
-        for j = 1:nd % number of b
+        for j = 1:nd % number of dictionary
             argmax(j) = norm_L2(g(:,j).*fqpt) - norm_L2(g(:,j).*un_1)-norm_L2(dg(:,j).*dun_1);
         end
         [~,id(i)] = max(abs(argmax));% optimal b of i^th iteration
@@ -59,9 +60,9 @@ function [id,C] = OGA_1D_ori(BASE_SIZE,nd,f)
         un_1 = g(:,id(1:i))*C;% r = u - un_1
         dun_1 = dg(:,id(1:i))*C;
 
-%         r = uqpt - un_1;
-%         err(i) = sqrt(norm_L2(r.^2));
-%         fprintf("Step %d, error_L2 is %f\n",i,err(i));
+        r = uqpt - un_1;
+        err(i) = sqrt(norm_L2(r.^2));
+        fprintf("Step %d, error_L2 is %f\n",i,err(i));
     end
 end
 

@@ -78,9 +78,9 @@ function [id,C_g] = OGA_1D_Duality(BASE_SIZE,nd,f)
         Phin_1 = g(:,id(1:2*i))*C_h;
         dPhin_1 = dg(:,id(1:2*i))*C_h;
         
-        % r = uqpt - un_1;
-        % err(i) = sqrt(norm_L2(r.^2));
-        % fprintf("Step %d, error_L2 is %f\n",2*i,err(i));
+        r = uqpt - un_1;
+        err(i) = sqrt(norm_L2(r.^2));
+        fprintf("Step %d, error_L2 is %f\n",2*i,err(i));
     end
 end
 
