@@ -29,8 +29,8 @@ function [w_Newton,b_Newton,C_g] = OGA_Newton_1D_Duality(BASE_SIZE,nd,f)
     dg_fixed = double(g_fixed > 0);% differential of g
     dg_fixed(:,nd/2+1:nd) = -dg_fixed(:,nd/2+1:nd);
     g = @(w,b) max(w*qpt+b,0);
-    dg_x = @(w,b) w*double(w*qpt+b>0);
-    dg_b = @(w,b) double(w*qpt+b>0);
+    dg_x = @(w,b) w*double((w*qpt+b)>0);
+    dg_b = @(w,b) double((w*qpt+b)>0);
     
     % value of f and solution u at quadrature points
     fqpt = f(qpt);
@@ -120,26 +120,26 @@ function [w_Newton,b_Newton,C_g] = OGA_Newton_1D_Duality(BASE_SIZE,nd,f)
 
         %% u_n = Pn(u)
         for j = 1:2*i
-            A(j,2*i) = norm_L2( g_base(j).*g_base(2*i) + dg_base(j).*dg_base(2*i) );
+            A(j,2*i) = norm_L2( g_base(:,j).*g_base(:,2*i) + dg_base(:,j).*dg_base(:,2*i) );
             A(2*i,j) = A(j,2*i);
             if j == 2*i
                 break
             end
-            A(j,2*i-1) = norm_L2( g_base(j).*dg_base(2*i-1) + dg_base(j).*dg_base(2*i-1) );
+            A(j,2*i-1) = norm_L2( g_base(:,j).*g_base(:,2*i-1) + dg_base(:,j).*g_base(:,2*i-1) );
             A(2*i-1,j) = A(j,2*i-1);
         end
-        rhs_g(2*i-1) = norm_L2(dg_base(2*i-1).*fqpt);
-        rhs_g(2*i) = norm_L2(g_base(2*i).*fqpt);
+        rhs_g(2*i-1) = norm_L2(g_base(:,2*i-1).*fqpt);
+        rhs_g(2*i) = norm_L2(g_base(:,2*i).*fqpt);
         C_g = lsqminnorm(A(1:2*i,1:2*i),rhs_g(1:2*i));
         % r = u - un_1
-        un_1 = g_base(1:2*i)*C_g;
-        dun_1 = dg_base(1:2*i)*C_g;
+        un_1 = g_base(:,1:2*i)*C_g;
+        dun_1 = dg_base(:,1:2*i)*C_g;
         
         rhs_h(2*i-1) = max(b_Newton(2*i-1),0);% int_0^1 g(0)*dx
         rhs_h(2*i) = max(b_Newton(2*i),0);
         C_h = lsqminnorm(A(1:2*i,1:2*i),rhs_h(1:2*i));
-        Phin_1 = g_base(1:2*i)*C_h;
-        dPhin_1 = dg_base(1:2*i)*C_h;
+        Phin_1 = g_base(:,1:2*i)*C_h;
+        dPhin_1 = dg_base(:,1:2*i)*C_h;
         
         r = uqpt - un_1;
         err(i) = sqrt(norm_L2(r.^2));

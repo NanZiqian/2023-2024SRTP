@@ -16,7 +16,7 @@ dun_1 = zeros(3*N,1);
 F = @(w,b) -1/2*( norm_L2(g(w,b) .* (fqpt-un_1)) - norm_L2(dg_x(w,b).*dun_1) )^2;
 %dF_b = @(w,b) -(norm_L2(g(w,b) .* (fqpt-un_1)) - norm_L2(dg_x(w,b).*dun_1))*( norm_L2(dg_b(w,b).*(fqpt-un_1)) );
 dF_b = @(w,b) -(max(b,0)-norm_L2(g(w,b) .* un_1) - norm_L2(dg_x(w,b).*dun_1)) * (double(b>0)-norm_L2(dg_b(w,b).*un_1));
-dF_b(1,0.05)
+
 % bk = -1:0.05:1;
 % for i = 1:2/0.05+1
 %     temp(i) = double(dF_b(1,bk(i)));
@@ -26,7 +26,7 @@ dF_b(1,0.05)
 %     alpha = armijo(bk,F,dF_b);
 %     bk = bk-alpha*dF_b(bk);
 % end
-
+scatter(qpt,g(-1,0.05));
 
 function z = norm_L2(F)
     z = 5/18*sum( F(1:end/3) )+4/9*sum( F(end/3+1:end/3*2) )+5/18*sum( F(end/3*2+1:end) );

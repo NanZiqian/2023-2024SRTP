@@ -29,7 +29,7 @@ for ii = 1:BASE_SIZE
 end
 un_dual = g_dual*C_dual;
 error_at0_dual(k) = abs(double(subs(un_dual,x,0)-subs(u,x,0)));
-error_l2_dual(k) = sqrt(double(abs(int((un_dual-u)^2,x,0,1))));
+% error_l2_dual(k) = sqrt(double(abs(int((un_dual-u)^2,x,[0,1]))));
 
 %% draw
 % fplot(un_ori,[0,1],':r');
@@ -37,5 +37,5 @@ error_l2_dual(k) = sqrt(double(abs(int((un_dual-u)^2,x,0,1))));
 % fplot(u,[0,1],'-b');
 
 fplot(un_dual,[0,1],':r');
-% hold on
+hold on
 fplot(u,[0,1],'-b');
