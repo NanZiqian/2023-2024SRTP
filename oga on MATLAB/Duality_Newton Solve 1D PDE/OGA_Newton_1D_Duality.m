@@ -40,6 +40,8 @@ function [w_Newton,b_Newton,C_g] = OGA_Newton_1D_Duality(BASE_SIZE,nd,f)
     dun_1 = zeros(3*N,1);
     Phin_1 = zeros(3*N,1);%-Phi''+Phi=l,l(f)=f(0)
     dPhin_1 = zeros(3*N,1);
+    g_base = zeros(3*N,BASE_SIZE);
+    dg_base = g_base;
     
     % matrix and rhs for projection
     A = zeros(BASE_SIZE,BASE_SIZE); 
@@ -75,11 +77,11 @@ function [w_Newton,b_Newton,C_g] = OGA_Newton_1D_Duality(BASE_SIZE,nd,f)
         F = @(w,b) -1/2*( norm_L2(g(w,b) .* (fqpt-un_1)) - norm_L2(dg_x(w,b).*dun_1) )^2;
         dF_b = @(w,b) -(norm_L2(g(w,b) .* (fqpt-un_1)) - norm_L2(dg_x(w,b).*dun_1))*( norm_L2(dg_b(w,b).*(fqpt-un_1)) );
         
-        bk = b_Newton(2*i-1) ;
+        bk = b_Newton(2*i-1);
         while norm(dF_b(1,bk),2) >= 1e-5
             % need to set the range of b, this time [-2,2]
-            [sign,alpha] = armijo(bk,F,dF_b,-2,2);
-            temp = bk-alpha*dF_b(bk);
+            [sign,alpha] = armijo(w_Newton(2*i-1),bk,F,dF_b,-2,2);
+            temp = bk-alpha*dF_b(w_Newton(2*i-1),bk);
             if sign && abs(temp)<=2
                 bk = temp;
             else
@@ -87,38 +89,57 @@ function [w_Newton,b_Newton,C_g] = OGA_Newton_1D_Duality(BASE_SIZE,nd,f)
             end
         end
         b_Newton(2*i-1) = bk;
+        g_base(:,2*i-1) = g(w_Newton(2*i-1),bk);
+        dg_base(:,2*i-1) = dg_x(w_Newton(2*i-1),bk);
 
         % argmax_h
         if id(2*i)>nd/2
             w_Newton(2*i) = -1;
-            b_Newton(2*i-1) = b( mod(id(2*i)-1,nd/2)+1 );
+            b_Newton(2*i) = b( mod(id(2*i)-1,nd/2)+1 );
         else
             w_Newton(2*i) = 1;
-            b_Newton(2*i-1) = b( id(2*i) );
+            b_Newton(2*i) = b( id(2*i) );
         end
+        F = @(w,b) -1/2*( max(b,0)-norm_L2(g(w,b) .* un_1) - norm_L2(dg_x(w,b).*dun_1) )^2;
+        dF_b = @(w,b) -(max(b,0)-norm_L2(g(w,b) .* un_1) - norm_L2(dg_x(w,b).*dun_1)) * (double(b>0)-norm_L2(dg_b(w,b).*un_1));
+        
+        bk = b_Newton(2*i);
+        while norm(dF_b(1,bk),2) >= 1e-5
+            % need to set the range of b, this time [-2,2]
+            [sign,alpha] = armijo(w_Newton(2*i),bk,F,dF_b,-2,2);
+            temp = bk-alpha*dF_b(w_Newton(2*i),bk);
+            if sign && abs(temp)<=2
+                bk = temp;
+            else
+                break;
+            end
+        end
+        b_Newton(2*i) = bk;
+        g_base(:,2*i) = g(w_Newton(2*i),bk);
+        dg_base(:,2*i) = dg_x(w_Newton(2*i),bk);
 
         %% u_n = Pn(u)
         for j = 1:2*i
-            A(j,2*i) = norm_L2( g_fixed(:,id(j)).*g_fixed(:,id(2*i)) + dg_fixed(:,id(j)).*dg_fixed(:,id(2*i)) );
+            A(j,2*i) = norm_L2( g_base(j).*g_base(2*i) + dg_base(j).*dg_base(2*i) );
             A(2*i,j) = A(j,2*i);
             if j == 2*i
                 break
             end
-            A(j,2*i-1) = norm_L2( g_fixed(:,id(j)).*g_fixed(:,id(2*i-1)) + dg_fixed(:,id(j)).*dg_fixed(:,id(2*i-1)) );
+            A(j,2*i-1) = norm_L2( g_base(j).*dg_base(2*i-1) + dg_base(j).*dg_base(2*i-1) );
             A(2*i-1,j) = A(j,2*i-1);
         end
-        rhs_g(2*i-1) = norm_L2(g_fixed(:,id(2*i-1)).*fqpt);
-        rhs_g(2*i) = norm_L2(g_fixed(:,id(2*i)).*fqpt);
+        rhs_g(2*i-1) = norm_L2(dg_base(2*i-1).*fqpt);
+        rhs_g(2*i) = norm_L2(g_base(2*i).*fqpt);
         C_g = lsqminnorm(A(1:2*i,1:2*i),rhs_g(1:2*i));
         % r = u - un_1
-        un_1 = g_fixed(:,id(1:2*i))*C_g;
-        dun_1 = dg_fixed(:,id(1:2*i))*C_g;
+        un_1 = g_base(1:2*i)*C_g;
+        dun_1 = dg_base(1:2*i)*C_g;
         
-        rhs_h(2*i-1) = max(b( mod(id(2*i-1)-1,80001)+1 ),0)*1;% int_0^1 g(0)*dx
-        rhs_h(2*i) = max(b( mod(id(2*i)-1,80001)+1 ),0)*1;
+        rhs_h(2*i-1) = max(b_Newton(2*i-1),0);% int_0^1 g(0)*dx
+        rhs_h(2*i) = max(b_Newton(2*i),0);
         C_h = lsqminnorm(A(1:2*i,1:2*i),rhs_h(1:2*i));
-        Phin_1 = g_fixed(:,id(1:2*i))*C_h;
-        dPhin_1 = dg_fixed(:,id(1:2*i))*C_h;
+        Phin_1 = g_base(1:2*i)*C_h;
+        dPhin_1 = dg_base(1:2*i)*C_h;
         
         r = uqpt - un_1;
         err(i) = sqrt(norm_L2(r.^2));
@@ -155,13 +176,13 @@ z = 5/18*sum( F(1:end/3) )+4/9*sum( F(end/3+1:end/3*2) )+5/18*sum( F(end/3*2+1:e
 z = z/500;% 500 == N is Gauss quadrature discretion number
 end
 
-function [sign,alpha] = armijo(xk,f,gradf,a,b)
+function [sign,alpha] = armijo(w,xk,f,gradf,a,b)
     % xk must be in [a,b]
     % xk as a parameter is x0
     m=0;
     beta = 0.5;
     sigma = 0.2;
-    gk = gradf(xk);
+    gk = gradf(w,xk);
     dk = -gk;
 
     sign = 1;
@@ -176,7 +197,7 @@ function [sign,alpha] = armijo(xk,f,gradf,a,b)
     end
     while 1
         alpha = beta^m;
-        if f(xk+alpha*dk) <= f(xk) + sigma*alpha*gk'*dk
+        if f(w,xk+alpha*dk) <= f(w,xk) + sigma*alpha*gk'*dk
             break;
         end
         m = m+1;
