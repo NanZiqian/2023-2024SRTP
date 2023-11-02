@@ -188,6 +188,9 @@ function [sign,alpha] = armijo(w,xk,f,gradf,a,b)
     sign = 1;
     while 1
         alpha = beta^m;
+        if xk == b && dk>0 || xk == a && dk<0
+            break;
+        end
         temp = xk+alpha*dk;
         if temp>b || temp<a
             m=m+1;
