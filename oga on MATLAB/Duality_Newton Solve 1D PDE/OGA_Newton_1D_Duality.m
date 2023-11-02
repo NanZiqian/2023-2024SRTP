@@ -1,6 +1,6 @@
 
 %% solve -u''+u=f,f=(1+pi^2)*cos(pi*x),u'(-1)=u'(1)=0;
-function [id,C_g] = OGA_1D_Duality(BASE_SIZE,nd,f)
+function [w_Newton,b_Newton,C_g] = OGA_Newton_1D_Duality(BASE_SIZE,nd,f)
     % the answer should be cos(pi*x)
     
     %BASE_SIZE need to be even or will be -1
@@ -25,9 +25,12 @@ function [id,C_g] = OGA_1D_Duality(BASE_SIZE,nd,f)
     %g = [repmat(qpt,1,nd)+b',-repmat(qpt,1,nd)+b']>0; % ReLU0
     %g(i,j)=1*qpt(i)+b(j),i<80001
     %g(i,j+80001)=-1*qpt(i)+b(j-80001)
-    g = max([repmat(qpt,1,nd/2)+b',-repmat(qpt,1,nd/2)+b'],0); % ReLU1
-    dg = double(g > 0);% differential of g
-    dg(:,nd/2+1:nd) = -dg(:,nd/2+1:nd);
+    g_fixed = max([repmat(qpt,1,nd/2)+b',-repmat(qpt,1,nd/2)+b'],0); % ReLU1
+    dg_fixed = double(g_fixed > 0);% differential of g
+    dg_fixed(:,nd/2+1:nd) = -dg_fixed(:,nd/2+1:nd);
+    g = @(w,b) max(w*qpt+b,0);
+    dg_x = @(w,b) w*double(w*qpt+b>0);
+    dg_b = @(w,b) double(w*qpt+b>0);
     
     % value of f and solution u at quadrature points
     fqpt = f(qpt);
@@ -44,39 +47,76 @@ function [id,C_g] = OGA_1D_Duality(BASE_SIZE,nd,f)
     rhs_h = zeros(BASE_SIZE,1);
     
     % argmax(i) is <g,u-un_1>H of wx+b(i) of each iteration
-    id = zeros(BASE_SIZE,1); argmax_g = zeros(nd,1);argmax_h = zeros(nd,1);
+    id = zeros(BASE_SIZE,1); 
+    w_Newton = id;
+    b_Newton = id;
     err = id;
+    argmax_g = zeros(nd,1);
+    argmax_h = zeros(nd,1);
     
     for i = 1:iter % iter = [BASE_SIZE/2]
         for j = 1:nd % <g,u-un_1>H
-            argmax_g(j) = norm_L2(g(:,j).*(fqpt-un_1))-norm_L2(dg(:,j).*dun_1);
+            argmax_g(j) = norm_L2(g_fixed(:,j).*(fqpt-un_1))-norm_L2(dg_fixed(:,j).*dun_1);
         end
         for j = 1:nd % <h,Phi-Phin_1>H,RELU
-            argmax_h(j) = max(b( mod(j-1,80001)+1 ),0)*1-norm_L2(g(:,j).*Phin_1)-norm_L2(dg(:,j).*dPhin_1);
+            argmax_h(j) = max(b( mod(j-1,80001)+1 ),0)*1-norm_L2(g_fixed(:,j).*Phin_1)-norm_L2(dg_fixed(:,j).*dPhin_1);
         end
         [~,id(2*i-1)] = max(abs(argmax_g));% argmax_g = <g,u-un_1>H of all g,argmax(j)-g(:,j)
         [~,id(2*i)] = max(abs(argmax_h));% argmax_h = <h,Phi-Phin_1>H of all h
+        %% use Gredient descent to find argmax
+        % argmax_g
+        if id(2*i-1)>nd/2
+            w_Newton(2*i-1) = -1;
+            b_Newton(2*i-1) = b( mod(id(2*i-1)-1,nd/2)+1 );
+        else
+            w_Newton(2*i-1) = 1;
+            b_Newton(2*i-1) = b( id(2*i-1) );
+        end
+        F = @(w,b) -1/2*( norm_L2(g(w,b) .* (fqpt-un_1)) - norm_L2(dg_x(w,b).*dun_1) )^2;
+        dF_b = @(w,b) -(norm_L2(g(w,b) .* (fqpt-un_1)) - norm_L2(dg_x(w,b).*dun_1))*( norm_L2(dg_b(w,b).*(fqpt-un_1)) );
+        
+        bk = b_Newton(2*i-1) ;
+        while norm(dF_b(1,bk),2) >= 1e-5
+            [sign,alpha] = armijo(bk,F,dF_b);
+            if sign
+                bk = bk-alpha*dF_b(bk);
+            else
+                break;
+            end
+        end
+        b_Newton(2*i-1) = bk ;
+
+        % argmax_h
+        if id(2*i)>nd/2
+            w_Newton(2*i) = -1;
+            b_Newton(2*i-1) = b( mod(id(2*i)-1,nd/2)+1 );
+        else
+            w_Newton(2*i) = 1;
+            b_Newton(2*i-1) = b( id(2*i) );
+        end
+
+        %% u_n = Pn(u)
         for j = 1:2*i
-            A(j,2*i) = norm_L2( g(:,id(j)).*g(:,id(2*i)) + dg(:,id(j)).*dg(:,id(2*i)) );
+            A(j,2*i) = norm_L2( g_fixed(:,id(j)).*g_fixed(:,id(2*i)) + dg_fixed(:,id(j)).*dg_fixed(:,id(2*i)) );
             A(2*i,j) = A(j,2*i);
             if j == 2*i
                 break
             end
-            A(j,2*i-1) = norm_L2( g(:,id(j)).*g(:,id(2*i-1)) + dg(:,id(j)).*dg(:,id(2*i-1)) );
+            A(j,2*i-1) = norm_L2( g_fixed(:,id(j)).*g_fixed(:,id(2*i-1)) + dg_fixed(:,id(j)).*dg_fixed(:,id(2*i-1)) );
             A(2*i-1,j) = A(j,2*i-1);
         end
-        rhs_g(2*i-1) = norm_L2(g(:,id(2*i-1)).*fqpt);
-        rhs_g(2*i) = norm_L2(g(:,id(2*i)).*fqpt);
+        rhs_g(2*i-1) = norm_L2(g_fixed(:,id(2*i-1)).*fqpt);
+        rhs_g(2*i) = norm_L2(g_fixed(:,id(2*i)).*fqpt);
         C_g = lsqminnorm(A(1:2*i,1:2*i),rhs_g(1:2*i));
         % r = u - un_1
-        un_1 = g(:,id(1:2*i))*C_g;
-        dun_1 = dg(:,id(1:2*i))*C_g;
+        un_1 = g_fixed(:,id(1:2*i))*C_g;
+        dun_1 = dg_fixed(:,id(1:2*i))*C_g;
         
         rhs_h(2*i-1) = max(b( mod(id(2*i-1)-1,80001)+1 ),0)*1;% int_0^1 g(0)*dx
         rhs_h(2*i) = max(b( mod(id(2*i)-1,80001)+1 ),0)*1;
         C_h = lsqminnorm(A(1:2*i,1:2*i),rhs_h(1:2*i));
-        Phin_1 = g(:,id(1:2*i))*C_h;
-        dPhin_1 = dg(:,id(1:2*i))*C_h;
+        Phin_1 = g_fixed(:,id(1:2*i))*C_h;
+        dPhin_1 = dg_fixed(:,id(1:2*i))*C_h;
         
         r = uqpt - un_1;
         err(i) = sqrt(norm_L2(r.^2));
@@ -111,4 +151,26 @@ end
 function z = norm_L2(F)
 z = 5/18*sum( F(1:end/3) )+4/9*sum( F(end/3+1:end/3*2) )+5/18*sum( F(end/3*2+1:end) );
 z = z/500;% 500 == N is Gauss quadrature discretion number
+end
+
+function [sign,alpha] = armijo(xk,f,gradf)
+    m=0;
+    beta = 0.5;
+    sigma = 0.2;
+    gk = gradf(xk);
+    dk = -gk;
+    alpha = 1;
+    sign = 1;
+    while 1
+        alpha = beta^m;
+        if f(xk+alpha*dk) <= f(xk) + sigma*alpha*gk'*dk
+            break;
+        end
+        m = m+1;
+        if m > 53
+            % unable to find alpha
+            sign = 0;
+            break;
+        end
+    end
 end
