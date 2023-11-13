@@ -8,11 +8,11 @@ u = cos(pi*x);
 
 
 % 32
-BASE_SIZE = 32;
-k=1;
+% BASE_SIZE = 32;
+% k=1;
 %% 64
-% BASE_SIZE = 64;
-% k=2;
+BASE_SIZE = 64;
+k=2;
 
 %% core code
 % [w_ori,b_ori,C_ori] = OGA_1D_ori(BASE_SIZE,nd,f);

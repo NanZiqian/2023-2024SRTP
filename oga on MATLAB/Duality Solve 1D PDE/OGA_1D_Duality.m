@@ -26,6 +26,7 @@ function [id,C_g] = OGA_1D_Duality(BASE_SIZE,nd,f)
     %g(i,j)=1*qpt(i)+b(j),i<80001
     %g(i,j+80001)=-1*qpt(i)+b(j-80001)
     g = max([repmat(qpt,1,nd/2)+b',-repmat(qpt,1,nd/2)+b'],0); % ReLU1
+    g_Newton = @(w,b) max(w*qpt+b,0);
     dg = double(g > 0);% differential of g
     dg(:,nd/2+1:nd) = -dg(:,nd/2+1:nd);
     
@@ -56,6 +57,24 @@ function [id,C_g] = OGA_1D_Duality(BASE_SIZE,nd,f)
         end
         [~,id(2*i-1)] = max(abs(argmax_g));% argmax_g = <g,u-un_1>H of all g,argmax(j)-g(:,j)
         [~,id(2*i)] = max(abs(argmax_h));% argmax_h = <h,Phi-Phin_1>H of all h
+        % see b
+        if id(2*i-1)>nd/2
+            w_Newton(2*i-1) = -1;
+            b_Newton(2*i-1) = b( mod(id(2*i-1)-1,nd/2)+1 );
+        else
+            w_Newton(2*i-1) = 1;
+            b_Newton(2*i-1) = b( id(2*i-1) );
+        end
+        if id(2*i)>nd/2
+            w_Newton(2*i) = -1;
+            b_Newton(2*i) = b( mod(id(2*i)-1,nd/2)+1 );
+        else
+            w_Newton(2*i) = 1;
+            b_Newton(2*i) = b( id(2*i) );
+        end
+        g_base(:,2*i-1) = g_Newton(w_Newton(2*i-1),b_Newton(2*i-1));
+        g_base(:,2*i) = g_Newton(w_Newton(2*i),b_Newton(2*i));
+        %% Pn
         for j = 1:2*i
             A(j,2*i) = norm_L2( g(:,id(j)).*g(:,id(2*i)) + dg(:,id(j)).*dg(:,id(2*i)) );
             A(2*i,j) = A(j,2*i);

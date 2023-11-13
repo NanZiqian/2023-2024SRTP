@@ -74,20 +74,20 @@ function [w_Newton,b_Newton,C_g] = OGA_Newton_1D_Duality(BASE_SIZE,nd,f)
             w_Newton(2*i-1) = 1;
             b_Newton(2*i-1) = b( id(2*i-1) );
         end
-        % F = @(w,b) -1/2*( norm_L2(g(w,b) .* (fqpt-un_1)) - norm_L2(dg_x(w,b).*dun_1) )^2;
-        % dF_b = @(w,b) -(norm_L2(g(w,b) .* (fqpt-un_1)) - norm_L2(dg_x(w,b).*dun_1))*( norm_L2(dg_b(w,b).*(fqpt-un_1)) );
+        F = @(w,b) -1/2*( norm_L2(g(w,b) .* (fqpt-un_1)) - norm_L2(dg_x(w,b).*dun_1) )^2;
+        dF_b = @(w,b) -(norm_L2(g(w,b) .* (fqpt-un_1)) - norm_L2(dg_x(w,b).*dun_1))*( norm_L2(dg_b(w,b).*(fqpt-un_1)) );
         
         bk = b_Newton(2*i-1);
-        % while norm(dF_b(1,bk),2) >= 1e-5
-        %     % need to set the range of b, this time [-2,2]
-        %     [sign,alpha] = armijo(w_Newton(2*i-1),bk,F,dF_b,-2,2);
-        %     temp = bk-alpha*dF_b(w_Newton(2*i-1),bk);
-        %     if sign && abs(temp)<=2
-        %         bk = temp;
-        %     else
-        %         break;
-        %     end
-        % end
+        while norm(dF_b(1,bk),2) >= 1e-5
+            % need to set the range of b, this time [-2,2]
+            [sign,alpha] = armijo(w_Newton(2*i-1),bk,F,dF_b,-2,2);
+            temp = bk-alpha*dF_b(w_Newton(2*i-1),bk);
+            if sign && abs(temp)<=2
+                bk = temp;
+            else
+                break;
+            end
+        end
         b_Newton(2*i-1) = bk;
         g_base(:,2*i-1) = g(w_Newton(2*i-1),bk);
         dg_base(:,2*i-1) = dg_x(w_Newton(2*i-1),bk);
@@ -100,20 +100,20 @@ function [w_Newton,b_Newton,C_g] = OGA_Newton_1D_Duality(BASE_SIZE,nd,f)
             w_Newton(2*i) = 1;
             b_Newton(2*i) = b( id(2*i) );
         end
-        % F = @(w,b) -1/2*( max(b,0)-norm_L2(g(w,b) .* un_1) - norm_L2(dg_x(w,b).*dun_1) )^2;
-        % dF_b = @(w,b) -(max(b,0)-norm_L2(g(w,b) .* un_1) - norm_L2(dg_x(w,b).*dun_1)) * (double(b>0)-norm_L2(dg_b(w,b).*un_1));
-        % 
+        F = @(w,b) -1/2*( max(b,0)-norm_L2(g(w,b) .* un_1) - norm_L2(dg_x(w,b).*dun_1) )^2;
+        dF_b = @(w,b) -(max(b,0)-norm_L2(g(w,b) .* un_1) - norm_L2(dg_x(w,b).*dun_1)) * (double(b>0)-norm_L2(dg_b(w,b).*un_1));
+        
         bk = b_Newton(2*i);
-        % while norm(dF_b(1,bk),2) >= 1e-5
-        %     % need to set the range of b, this time [-2,2]
-        %     [sign,alpha] = armijo(w_Newton(2*i),bk,F,dF_b,-2,2);
-        %     temp = bk-alpha*dF_b(w_Newton(2*i),bk);
-        %     if sign && abs(temp)<=2
-        %         bk = temp;
-        %     else
-        %         break;
-        %     end
-        % end
+        while norm(dF_b(1,bk),2) >= 1e-5
+            % need to set the range of b, this time [-2,2]
+            [sign,alpha] = armijo(w_Newton(2*i),bk,F,dF_b,-2,2);
+            temp = bk-alpha*dF_b(w_Newton(2*i),bk);
+            if sign && abs(temp)<=2
+                bk = temp;
+            else
+                break;
+            end
+        end
         b_Newton(2*i) = bk;
         g_base(:,2*i) = g(w_Newton(2*i),bk);
         dg_base(:,2*i) = dg_x(w_Newton(2*i),bk);
@@ -125,13 +125,12 @@ function [w_Newton,b_Newton,C_g] = OGA_Newton_1D_Duality(BASE_SIZE,nd,f)
             if j == 2*i
                 break
             end
-            A(j,2*i-1) = norm_L2( g_base(:,j).*g_base(:,2*i-1) + dg_base(:,j).*g_base(:,2*i-1) );
+            A(j,2*i-1) = norm_L2( g_base(:,j).*g_base(:,2*i-1) + dg_base(:,j).*dg_base(:,2*i-1) );
             A(2*i-1,j) = A(j,2*i-1);
         end
         rhs_g(2*i-1) = norm_L2(g_base(:,2*i-1).*fqpt);
         rhs_g(2*i) = norm_L2(g_base(:,2*i).*fqpt);
         C_g = lsqminnorm(A(1:2*i,1:2*i),rhs_g(1:2*i));
-        % r = u - un_1
         un_1 = g_base(:,1:2*i)*C_g;
         dun_1 = dg_base(:,1:2*i)*C_g;
         
