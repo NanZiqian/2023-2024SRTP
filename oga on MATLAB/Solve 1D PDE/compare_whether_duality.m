@@ -3,14 +3,14 @@ clear
 clc
 
 % super parameter
-hd =1e-2;
-k=2;%ReLU's power
+nd = 160002;% number of dictionary
+k=3;%ReLU's power
 f = @(z) (1+pi^2)*cos(pi*z);
 syms x;
 u = cos(pi*x);
 
 % parameter defined by above
-b = (-2.0:hd:2.0)';nd = 2*(4/hd+1);% number of dictionary
+hd = 4/(nd/2-1); b = (-2.0:hd:2.0)';
 error_at0_ori = zeros(1,3);
 error_l2_ori = zeros(1,3);
 error_at0_dual = zeros(1,3);
