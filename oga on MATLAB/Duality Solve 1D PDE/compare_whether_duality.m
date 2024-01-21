@@ -22,7 +22,7 @@ error_index=1;
 BASE_SIZE = 64;
 error_index=2;
 %% 128
-BASE_SIZE = 128;
+BASE_SIZE = 512;
 error_index=3;
 %% core code
 % [id_ori,C_ori] = OGA_1D_ori(BASE_SIZE,nd,f);
