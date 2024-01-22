@@ -3,7 +3,8 @@ clear
 clc
 
 % super parameter
-hd =1e-2;
+%hd =1e-2;
+hd = 5e-5;
 k=2;%ReLU's power
 f = @(z) (1+pi^2)*cos(pi*z);
 syms x;
@@ -18,12 +19,12 @@ error_l2_dual = zeros(1,3);
 %% 32
 BASE_SIZE = 32;
 error_index=1;
-%% 64
-BASE_SIZE = 64;
-error_index=2;
 %% 128
-BASE_SIZE = 512;
-error_index=3;
+BASE_SIZE = 128;
+error_index=2;
+%% 256
+%BASE_SIZE = 256;
+%error_index=3;
 %% core code
 % [id_ori,C_ori] = OGA_1D_ori(BASE_SIZE,nd,f);
 % for ii = 1:BASE_SIZE

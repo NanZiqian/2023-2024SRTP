@@ -21,7 +21,8 @@ function [id,C_g,err] = OGA_1D_Duality(BASE_SIZE,nd,f,k)
     % nd = 160002;number of dictionary
     hd = 4/(nd/2-1); b = (-2.0:hd:2.0)'; 
     
-    g_Newton = @(w,b) max(w*qpt+b,0);
+    %g_Newton = @(w,b) max(w*qpt+b,0);
+    
     %g(i,j)=1*qpt(i)+b(j),i<nd/2
     %g(i,j+nd/2)=-1*qpt(i)+b(j-nd/2)
     % ReLU0
@@ -60,7 +61,7 @@ function [id,C_g,err] = OGA_1D_Duality(BASE_SIZE,nd,f,k)
     
     % argmax(i) is <g,u-un_1>H of wx+b(i) of each iteration
     id = zeros(BASE_SIZE,1); argmax_g = zeros(nd,1);argmax_h = zeros(nd,1);
-    err = id;
+    err = id;argmax_value = id;
     
     for i = 1:iter % iter = [BASE_SIZE/2]
         for j = 1:nd % <g,u-un_1>H
@@ -69,8 +70,8 @@ function [id,C_g,err] = OGA_1D_Duality(BASE_SIZE,nd,f,k)
         for j = 1:nd % <h,Phi-Phin_1>H,RELU
             argmax_h(j) = max(b( mod(j-1,nd/2)+1 ),0).^k*1-norm_L2(g(:,j).*Phin_1)-norm_L2(dg(:,j).*dPhin_1);
         end
-        [~,id(2*i-1)] = max(abs(argmax_g));% argmax_g = <g,u-un_1>H of all g,argmax(j)-g(:,j)
-        [~,id(2*i)] = max(abs(argmax_h));% argmax_h = <h,Phi-Phin_1>H of all h
+        [argmax_value(2*i-1),id(2*i-1)] = max(abs(argmax_g));% argmax_g = <g,u-un_1>H of all g,argmax(j)-g(:,j)
+        [argmax_value(2*i),id(2*i)] = max(abs(argmax_h));% argmax_h = <h,Phi-Phin_1>H of all h
         %% optimize b
         % if id(2*i-1)>nd/2
         %     w_Newton(2*i-1) = -1;
@@ -113,7 +114,16 @@ function [id,C_g,err] = OGA_1D_Duality(BASE_SIZE,nd,f,k)
         
         r = uqpt - un_1;
         err(i) = sqrt(norm_L2(r.^2));
+        
         fprintf("Step %d, error_L2 is %f\n",2*i,err(i));
+        fprintf("argmax_value for g is %e,\n",argmax_value(2*i-1));
+        fprintf("for h is %e\n",argmax_value(2*i));
+        %fprintf("pick %dth base for g, %dth for h.\n",id(2*i-1),id(2*i));
+        if i>1
+            fprintf("g picked before? %d",~isempty(find(id(1:2*i-2)==id(2*i-1),1)));
+            fprintf(" h picked before? %d\n",~isempty(find(id(1:2*i-2)==id(2*i),1)));
+        end
+        fprintf("\n");
     end
 end
 

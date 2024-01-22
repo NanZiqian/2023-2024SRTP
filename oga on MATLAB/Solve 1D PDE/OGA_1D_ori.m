@@ -4,7 +4,7 @@
 % BASE_SIZE = 100
 % nd = 160002 number of dictionary
 % f = @(z) (1+pi^2)*cos(pi*z);
-function [id,C] = OGA_1D_ori(BASE_SIZE,nd,f)
+function [id,C,err] = OGA_1D_ori(BASE_SIZE,nd,f,k)
     
     % BASE_SIZE = 100
     iter = BASE_SIZE;
@@ -30,12 +30,19 @@ function [id,C] = OGA_1D_ori(BASE_SIZE,nd,f)
     %g(i,j)=1*qpt(i)+b(j),i<80001
     %g(i,j+80001)=-1*qpt(i)+b(j-80001)
     g = max([repmat(qpt,1,nd/2)+b',-repmat(qpt,1,nd/2)+b'],0); % ReLU1
-    dg = double(g > 0);% differential of g
-    dg(:,80002:160002) = -dg(:,80002:160002);
+    if k ~= 1 %ReLUk,k>1
+        dg = k*g.^(k-1);
+        g = g.^k;
+    end
+    if k == 1 % ReLU1
+        dg = double(g > 0);
+    end
+    dg(:,nd/2+1:nd) = -dg(:,nd/2+1:nd); 
     
     % value of f at quadrature points
     fqpt = f(qpt);
     uqpt = cos(pi*qpt);
+    duqpt = -pi*sin(pi*qpt);
     un_1 = zeros(1500,1);
     dun_1 = zeros(1500,1);
     
@@ -44,13 +51,13 @@ function [id,C] = OGA_1D_ori(BASE_SIZE,nd,f)
     
     % argmax(i) is <g,u-un_1>H of wx+b(i) of each iteration
     id = zeros(iter,1); argmax = zeros(nd,1);
-    
-    err = id;
+    argmax_value = id;err = id;
+
     for i = 1:iter
         for j = 1:nd % number of dictionary
             argmax(j) = norm_L2(g(:,j).*fqpt) - norm_L2(g(:,j).*un_1)-norm_L2(dg(:,j).*dun_1);
         end
-        [~,id(i)] = max(abs(argmax));% optimal b of i^th iteration
+        [argmax_value(i),id(i)] = max(abs(argmax));% optimal b of i^th iteration
         for j = 1:i
             A(j,i) = norm_L2(g(:,id(j)).*g(:,id(i))) + norm_L2(dg(:,id(j)).*dg(:,id(i)));
             A(i,j) = A(j,i);
@@ -62,7 +69,16 @@ function [id,C] = OGA_1D_ori(BASE_SIZE,nd,f)
 
         r = uqpt - un_1;
         err(i) = sqrt(norm_L2(r.^2));
-        fprintf("Step %d, error_L2 is %f\n",i,err(i));
+        fprintf("Step %d, error_L2 is %f， error_H is %f\n",i,err(i),sqrt(norm_L2(r.^2+(duqpt-dun_1).^2)));
+        fprintf("argmax_value for g is %e, ",argmax_value(i));
+        %fprintf("pick %dth base for g.\n",id(i));
+        if i>1
+            fprintf("g picked before? %d\n",~isempty(find(id(1:i-1)==id(i),1)));
+        end
+        fprintf("\n");
+        if i==iter
+            pause(1);
+        end
     end
 end
 
