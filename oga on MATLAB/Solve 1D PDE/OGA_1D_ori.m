@@ -6,26 +6,20 @@
 % f = @(z) (1+pi^2)*cos(pi*z);
 function [id,C,err] = OGA_1D_ori(BASE_SIZE,nd,f,k)
     
-    % BASE_SIZE = 100
-    iter = BASE_SIZE;
-    % f = @(z) (1+pi^2)*cos(pi*z); 
+    iter = BASE_SIZE; 
     N = 500; h = 1/N;% N = 500;Gauss integral
     node = (0:h:1)';% column
-    
-    % 3-point Gauss quadrature
-    c = [1/2-sqrt(15)/10 1/2 1/2+sqrt(15)/10];
-    
+    c = [1/2-sqrt(15)/10 1/2 1/2+sqrt(15)/10];% 3-point Gauss quadrature
     % quadrature points devide each 1/N into three. 
     % qpt(1:500,1):[x1+c(1)*h;x2+c(1)*h;...]
     % qpt(500:1000,1):[x1+c(2)*h;x2+c(2)*h;...]
     % ...
     qpt = [node(1:end-1)+c(1)*h;node(1:end-1)+c(2)*h;node(1:end-1)+c(3)*h];
-    
     % discretization of the dictionary
     % nd = 160002;number of dictionary
     % hd = 5e-05
     hd = 8/(nd-2); b = (-2.0:hd:2.0)'; 
-    
+
     %g = [repmat(qpt,1,nd)+b',-repmat(qpt,1,nd)+b']>0; % ReLU0
     %g(i,j)=1*qpt(i)+b(j),i<80001
     %g(i,j+80001)=-1*qpt(i)+b(j-80001)
@@ -45,14 +39,14 @@ function [id,C,err] = OGA_1D_ori(BASE_SIZE,nd,f,k)
     duqpt = -pi*sin(pi*qpt);
     un_1 = zeros(1500,1);
     dun_1 = zeros(1500,1);
-    
     % matrix and rhs for projection
     A = zeros(iter,iter); rhs = zeros(iter,1); 
-    
     % argmax(i) is <g,u-un_1>H of wx+b(i) of each iteration
     id = zeros(iter,1); argmax = zeros(nd,1);
     argmax_value = id;err = id;
-
+    % debug -----------------------------------------------
+    last_iter_num = 1;
+    % debug -----------------------------------------------
     for i = 1:iter
         for j = 1:nd % number of dictionary
             argmax(j) = norm_L2(g(:,j).*fqpt) - norm_L2(g(:,j).*un_1)-norm_L2(dg(:,j).*dun_1);
@@ -69,6 +63,7 @@ function [id,C,err] = OGA_1D_ori(BASE_SIZE,nd,f,k)
 
         r = uqpt - un_1;
         err(i) = sqrt(norm_L2(r.^2));
+
         fprintf("Step %d, error_L2 is %f， error_H is %f\n",i,err(i),sqrt(norm_L2(r.^2+(duqpt-dun_1).^2)));
         fprintf("argmax_value for g is %e, ",argmax_value(i));
         %fprintf("pick %dth base for g.\n",id(i));
@@ -76,10 +71,28 @@ function [id,C,err] = OGA_1D_ori(BASE_SIZE,nd,f,k)
             fprintf("g picked before? %d\n",~isempty(find(id(1:i-1)==id(i),1)));
         end
         fprintf("\n");
-        if i==iter
-            pause(1);
+        % debug-------------------------------------------------------------
+        % plot u-un_1
+        if rem(i,floor(iter/5)) == 0
+            figure()
+            %plot(qpt(1:500),r(1:500))% visualize the residual
+            % visualize the newly added approx. (useless because added new
+            %base, projection need to be redone.)
+            plot(qpt(1:500),g(1:500,id(last_iter_num:i))*C(last_iter_num:i));
+            last_iter_num = i;
+            pause(1)
         end
+        % end debug------------------------------------------------------
     end
+    % debug-------------------------------------------------------------
+    % plot all the base function
+    figure();
+    for ii = 1:2:nd
+        plot(qpt(1:500),g(1:500,ii))
+        hold on
+    end
+    pause(1);
+    % end debug------------------------------------------------------
 end
 
 %% draw
@@ -103,8 +116,6 @@ end
 % fprintf('The convergence rate is %.2e \n', -temp(1));
 
 %% --------------------------------------------------------------------------
-% F(1:end/3) = function F
-% F(i)=
 function z = norm_L2(F)
     z = 5/18*sum( F(1:end/3) )+4/9*sum( F(end/3+1:end/3*2) )+5/18*sum( F(end/3*2+1:end) );
     z = z/500;% 500 == N is Gauss quadrature discretion number

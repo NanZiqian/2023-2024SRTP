@@ -3,7 +3,7 @@ clear
 clc
 
 % super parameter
-hd =1e-2;
+hd =0.0105;
 %hd = 5e-5;
 k=2;%ReLU's power
 f = @(z) (1+pi^2)*cos(pi*z);
@@ -11,7 +11,7 @@ syms x;
 u = cos(pi*x);
 
 % parameter defined by above
-b = (-2.0:hd:2.0)';nd = 2*(4/hd+1);% number of dictionary
+b = (-2.0:hd:2.0)';nd = 2*length(b);% number of dictionary
 error_at0_ori = zeros(1,3);
 error_l2_ori = zeros(1,3);
 error_at0_dual = zeros(1,3);
@@ -57,6 +57,7 @@ error_index=2;
 % fplot(un_dual,[0,1],':r');
 % hold on
 % fplot(u,[0,1],'-b');
+figure();
 plot(log10((1:BASE_SIZE)'),log10(err),'.r');
 
 %% functino RELU
