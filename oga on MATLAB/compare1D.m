@@ -3,10 +3,10 @@ clear
 clc
 
 % super parameter
-hd = 0.005;%hd = 5e-5;
+hd = 0.001;%hd = 5e-5;
 k=2;%ReLU's power
 max_basesize_power = 7;%max base size = 2^max_basesize_power
-N=600;%Gauss Legrendre quadrature discretion number
+N=1000;%Gauss Legrendre quadrature discretion number
 f = @(z) (1+pi^2)*cos(pi*z);
 syms x;
 u = cos(pi*x);

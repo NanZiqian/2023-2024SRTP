@@ -1,7 +1,7 @@
 
 %% solve -u''+u=f,f=(1+pi^2)*cos(pi*x),u'(-1)=u'(1)=0;
+% the answer should be cos(pi*x)
 function [un_1,err_l2,err_H] = OGA_1D_Duality(BASE_SIZE,nd,f,k,N)
-    % the answer should be cos(pi*x)
     
     %BASE_SIZE need to be even or will be -1
     iter = floor(BASE_SIZE/2);
@@ -18,22 +18,13 @@ function [un_1,err_l2,err_H] = OGA_1D_Duality(BASE_SIZE,nd,f,k,N)
     qpt = [node(1:end-1)+c(1)*h;node(1:end-1)+c(2)*h;node(1:end-1)+c(3)*h];
     
     % discretization of the dictionary
-    % nd = 160002;number of dictionary
+    % nd = number of dictionary
     hd = 4/(nd/2-1); b = (-2.0:hd:2.0)'; 
-    
-    %g_Newton = @(w,b) max(w*qpt+b,0);
-    
+
     %g(i,j)=1*qpt(i)+b(j),i<nd/2
     %g(i,j+nd/2)=-1*qpt(i)+b(j-nd/2)
     % ReLU0
     %g = [repmat(qpt,1,nd)+b',-repmat(qpt,1,nd)+b']>0;
-    % ReLU1
-    %g = max([repmat(qpt,1,nd/2)+b',-repmat(qpt,1,nd/2)+b'],0);
-    %dg = double(g > 0);dg(:,nd/2+1:nd) = -dg(:,nd/2+1:nd); 
-    % ReLUk
-    %g = max([repmat(qpt,1,nd/2)+b',-repmat(qpt,1,nd/2)+b'],0);
-    %dg = k*g.^(k-1);dg(:,nd/2+1:nd) = -dg(:,nd/2+1:nd);
-    %g = g.^k;
     % the following is a simple combination of RELU1 and RELUk
     g = max([repmat(qpt,1,nd/2)+b',-repmat(qpt,1,nd/2)+b'],0); % ReLU1
     if k ~= 1 %ReLUk,k>1
@@ -150,8 +141,6 @@ end
 
 %% --------------------------------------------------------------------------
 % F(1:end/3) = F(x_i+c(1)*h)
-% not really norm_L2, actually is Gauss integral, need to product two
-% functions before-hand
 function z = norm_L2(F)
     N = length(F)/3;
     z = 5/18*sum( F(1:end/3) )+4/9*sum( F(end/3+1:end/3*2) )+5/18*sum( F(end/3*2+1:end) );
