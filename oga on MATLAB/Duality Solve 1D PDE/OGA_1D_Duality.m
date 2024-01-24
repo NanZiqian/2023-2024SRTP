@@ -1,19 +1,19 @@
 
 %% solve -u''+u=f,f=(1+pi^2)*cos(pi*x),u'(-1)=u'(1)=0;
-function [id,C_g,err] = OGA_1D_Duality(BASE_SIZE,nd,f,k)
+function [un_1,err_l2,err_H] = OGA_1D_Duality(BASE_SIZE,nd,f,k,N)
     % the answer should be cos(pi*x)
     
     %BASE_SIZE need to be even or will be -1
     iter = floor(BASE_SIZE/2);
     % f = @(x) (1+pi^2)*cos(pi*x); 
-    N = 500; h = 1/N;
+    h = 1/N;
     node = (0:h:1)';% column
     
     % 3-point Gauss quadrature
     c = [1/2-sqrt(15)/10 1/2 1/2+sqrt(15)/10];
     % quadrature points devide each 1/N into three. 
-    % qpt(1:500,1):[x1+c(1)*h;x2+c(1)*h;...]
-    % qpt(500:1000,1):[x1+c(2)*h;x2+c(2)*h;...]
+    % qpt(1:N,1):[x1+c(1)*h;x2+c(1)*h;...]
+    % qpt(N:2*N,1):[x1+c(2)*h;x2+c(2)*h;...]
     % ...
     qpt = [node(1:end-1)+c(1)*h;node(1:end-1)+c(2)*h;node(1:end-1)+c(3)*h];
     
@@ -48,6 +48,7 @@ function [id,C_g,err] = OGA_1D_Duality(BASE_SIZE,nd,f,k)
     % value of f and solution u at quadrature points
     fqpt = f(qpt);
     uqpt = cos(pi*qpt);
+    duqpt = -pi*sin(pi*qpt);
     
     un_1 = zeros(3*N,1);%-u''+u=f
     dun_1 = zeros(3*N,1);
@@ -61,7 +62,8 @@ function [id,C_g,err] = OGA_1D_Duality(BASE_SIZE,nd,f,k)
     
     % argmax(i) is <g,u-un_1>H of wx+b(i) of each iteration
     id = zeros(BASE_SIZE,1); argmax_g = zeros(nd,1);argmax_h = zeros(nd,1);
-    err = id;argmax_value = id;
+    argmax_value = id; 
+    err_l2 = zeros(iter,1); err_H = zeros(iter,1);
     
     for i = 1:iter % iter = [BASE_SIZE/2]
         for j = 1:nd % <g,u-un_1>H
@@ -113,16 +115,15 @@ function [id,C_g,err] = OGA_1D_Duality(BASE_SIZE,nd,f,k)
         dPhin_1 = dg(:,id(1:2*i))*C_h;
         
         r = uqpt - un_1;
-        err(i) = sqrt(norm_L2(r.^2));
+        err_l2(i) = sqrt(norm_L2(r.^2));
+        err_H(i) = sqrt(norm_L2(r.^2+(duqpt-dun_1).^2));
         
-        fprintf("Step %d, error_L2 is %f\n",2*i,err(i));
-        fprintf("argmax_value for g is %e,\n",argmax_value(2*i-1));
-        fprintf("for h is %e\n",argmax_value(2*i));
-        %fprintf("pick %dth base for g, %dth for h.\n",id(2*i-1),id(2*i));
-        if i>1
-            fprintf("g picked before? %d",~isempty(find(id(1:2*i-2)==id(2*i-1),1)));
-            fprintf(" h picked before? %d\n",~isempty(find(id(1:2*i-2)==id(2*i),1)));
-        end
+        fprintf("Step %d, error_L2 is %f， error_H is %f\n",i,err_l2(i),err_H(i));
+        %fprintf("argmax_value for g is %e, ",argmax_value(i));
+        %fprintf("pick %dth base for g.\n",id(i));
+        % if i>1
+        %     fprintf("g picked before? %d\n",~isempty(find(id(1:i-1)==id(i),1)));
+        % end
         fprintf("\n");
     end
 end
@@ -152,6 +153,7 @@ end
 % not really norm_L2, actually is Gauss integral, need to product two
 % functions before-hand
 function z = norm_L2(F)
-z = 5/18*sum( F(1:end/3) )+4/9*sum( F(end/3+1:end/3*2) )+5/18*sum( F(end/3*2+1:end) );
-z = z/500;% 500 == N is Gauss quadrature discretion number
+    N = length(F)/3;
+    z = 5/18*sum( F(1:end/3) )+4/9*sum( F(end/3+1:end/3*2) )+5/18*sum( F(end/3*2+1:end) );
+    z = z/N;% h = 1/N
 end

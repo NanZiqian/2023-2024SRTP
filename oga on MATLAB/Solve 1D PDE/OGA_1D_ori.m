@@ -4,7 +4,7 @@
 % BASE_SIZE = 100
 % nd = 160002 number of dictionary
 % f = @(z) (1+pi^2)*cos(pi*z);
-function [id,C,err] = OGA_1D_ori(BASE_SIZE,nd,f,k,N)
+function [un_1,err_L2,err_H] = OGA_1D_ori(BASE_SIZE,nd,f,k,N)
     
     iter = BASE_SIZE; 
     h = 1/N;% Gauss integral
@@ -43,7 +43,7 @@ function [id,C,err] = OGA_1D_ori(BASE_SIZE,nd,f,k,N)
     A = zeros(iter,iter); rhs = zeros(iter,1); 
     % argmax(i) is <g,u-un_1>H of wx+b(i) of each iteration
     id = zeros(iter,1); argmax = zeros(nd,1);
-    argmax_value = id;err = id;
+    argmax_value = id;err_L2 = id;err_H = id;
     % debug -----------------------------------------------
     last_iter_num = 1;
     % debug -----------------------------------------------
@@ -62,15 +62,17 @@ function [id,C,err] = OGA_1D_ori(BASE_SIZE,nd,f,k,N)
         dun_1 = dg(:,id(1:i))*C;
 
         r = uqpt - un_1;
-        err(i) = sqrt(norm_L2(r.^2));
+        err_L2(i) = sqrt(norm_L2(r.^2));
+        err_H(i) = sqrt(norm_L2(r.^2+(duqpt-dun_1).^2));
 
-        fprintf("Step %d, error_L2 is %f， error_H is %f\n",i,err(i),sqrt(norm_L2(r.^2+(duqpt-dun_1).^2)));
-        fprintf("argmax_value for g is %e, ",argmax_value(i));
-        %fprintf("pick %dth base for g.\n",id(i));
-        if i>1
-            fprintf("g picked before? %d\n",~isempty(find(id(1:i-1)==id(i),1)));
-        end
-        fprintf("\n");
+        % fprintf("Step %d, error_L2 is %f， error_H is %f\n",i,err_L2(i),err_H(i));
+        % fprintf("argmax_value for g is %e, ",argmax_value(i));
+        % %fprintf("pick %dth base for g.\n",id(i));
+        % if i>1
+        %     fprintf("g picked before? %d\n",~isempty(find(id(1:i-1)==id(i),1)));
+        % end
+        % fprintf("\n");
+        
         % debug-------------------------------------------------------------
         % % plot u-un_1
         % if rem(i,floor(iter/5)) == 0
