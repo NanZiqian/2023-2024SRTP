@@ -3,9 +3,9 @@ clear
 clc
 
 % super parameter
-hd = 0.005%hd = 5e-5;
+hd =0.0105;%hd = 5e-5;
 k=2;%ReLU's power
-N=2000;%Gauss Legrendre quadrature discretion number
+N=2000;%inter Gauss intergral
 f = @(z) (1+pi^2)*cos(pi*z);
 syms x;
 u = cos(pi*x);

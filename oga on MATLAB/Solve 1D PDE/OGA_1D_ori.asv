@@ -117,7 +117,6 @@ end
 
 %% --------------------------------------------------------------------------
 function z = norm_L2(F)
-    N = length(F)/3;
     z = 5/18*sum( F(1:end/3) )+4/9*sum( F(end/3+1:end/3*2) )+5/18*sum( F(end/3*2+1:end) );
-    z = z/N;% h=1/N
+    z = z/N;% N is Gauss quadrature discretion number
 end
